@@ -7,3 +7,4 @@ scikit-learn~=0.24.2
 statsmodels~=0.12.2
 dash~=2.0.0
 plotly~=5.3.1
+duckdb~=0.2.9

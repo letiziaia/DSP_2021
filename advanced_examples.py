@@ -81,8 +81,11 @@ df = pd.read_csv("data/iris.csv")
 # Print first 5 rows of the dataframe
 print(df.head())
 
-# Overview
+# Overview: summary statistics
 print(df.describe(include="all"))
+
+# Overview: which columns, how many values, memory usage
+print(df.info())
 
 # Columns of dataframe can be accessed by names or with dot notation (if there is no space in column name)
 print(df['sepal.length'])
@@ -93,10 +96,34 @@ print(df.iloc[0])
 
 # A single value in the dataframe can be accessed the same way:
 print('\n', df.iloc[0, 1])
+print('\n', df.iloc[5]["variety"])
 
 # Iterating by rows
 for i, row in df.iterrows():
     print(f'Row {i}. Contents:\n{row}\n')
+
+# unique values
+print(df["variety"].unique())
+
+# Group by
+print(df.groupby("variety").count())
+
+print(df.groupby("variety").groups.keys())
+
+# In-built stats
+print(df.median())
+
+print(df.corr(method="kendall"))
+
+# From one categorical column, get multiple columns as one-hot
+print(pd.get_dummies(df["variety"]))
+
+# Transform the type of a pandas column
+# Here we change object to category
+df["variety"] = df["variety"].astype(dtype="category")
+
+# pandas can encode categories with numbers
+print(df.variety.cat.codes)
 
 ##################################################################################
 # PLOTTING: See also PFDA CHAPTER 9                                                   #
@@ -110,11 +137,33 @@ import matplotlib.pyplot as plt
 df.plot.scatter(x="sepal.width", y="sepal.length", c="petal.width", s="petal.length")
 plt.show()
 
+df.boxplot()
+plt.show()
+
+df.boxplot(by="variety")
+plt.show()
+
+df.plot.kde()
+plt.show()
+
+df.value_counts(subset=["variety"], normalize=True).plot(kind="pie")
+plt.show()
+
+df.value_counts(subset=["variety"], normalize=True).plot(kind="bar")
+plt.show()
+
 # From matplotlib
 plt.scatter(x=df["sepal.width"], y=df["petal.width"])
 plt.xlabel("sepal width")
 plt.ylabel("petal width")
 plt.show()
+
+
+plt.scatter(x=df["sepal.width"], y=df["petal.width"], c=df.variety.cat.codes)
+plt.xlabel("sepal width")
+plt.ylabel("petal width")
+plt.show()
+
 
 plt.hist2d(x=df["sepal.width"], y=df["petal.width"])
 plt.xlabel("sepal width")
@@ -144,6 +193,16 @@ g.map_offdiag(sns.scatterplot)
 g.add_legend()
 plt.show()
 
+# From plotly
+
+import plotly.express as px
+
+fig = px.scatter(df, x=df.columns[0], y=df.columns[1], color=df.variety, size=df.columns[3])
+fig.show()
+
+fig = px.scatter_3d(df, x=df.columns[0], y=df.columns[1], z=df.columns[2], color=df.variety, size=df.columns[3])
+fig.show()
+
 ##################################################################################
 # MACHINE LEARNING, CLASSIFICATION: See also PFDA 13.4                           #
 ##################################################################################
@@ -165,6 +224,36 @@ print(confusion_matrix(y_test, y_pred))
 print(classification_report(y_test, y_pred))
 print(balanced_accuracy_score(y_test, y_pred))
 
+# Which classes does my classifier know?
+print(clf.classes_)
+
+# See parameters
+print(clf.get_params())
+
+
+# Do not expect to get accuracy 1 in real life!
+# Let's see an example with some wrong predictions
+
+from sklearn.naive_bayes import GaussianNB
+clf = GaussianNB()
+clf.fit(X_train, y_train)
+
+y_pred = clf.predict(X_test)
+
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+print(balanced_accuracy_score(y_test, y_pred))
+
+# class_prior is specific for GaussianNB
+print(clf.class_prior_)
+
+# Some classifiers compute the class label as probability
+# In that case, you can ask your classifier to give you the probability of belonging to each class
+y_pred_probabilities = clf.predict_proba(X_test)
+
+# There are 3 classes, that's why the shape is:
+print(y_pred_probabilities.shape)
+
 ##################################################################################
 # MACHINE LEARNING, TIME SERIES: See also PFDA CHAPTER 11                        #
 ##################################################################################
@@ -180,5 +269,10 @@ plt.show()
 
 import statsmodels.api as sm
 
+# detrend and plot the time series with no trend
 sns.lineplot(x=df.index, y=sm.tsa.detrend(df["value"]))
 plt.show()
+
+# line plot with plotly
+fig = px.line(x=df.index, y=df["value"])
+fig.show()
